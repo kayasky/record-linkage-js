@@ -2,8 +2,8 @@
   var fs = require('fs'),
     listingsArr = require('./data/listings').listings,
     productsArr = require('./data/products').products,
-    useMocks = false,
-    showLog = true,
+    useMocks = false, // Set this to true to use mock data for listings and products
+    showLog = true, // Set this to true to show logs while matches are being made
     results = [],
     resultsTxt = "",
     currentProductModel,
@@ -23,20 +23,21 @@
     }] :
     productsArr;
 
+  // Returns an array containing all the words in the phrase passed
   function splitWords(phrase) {
     phrase = phrase || '';
     var lowerCased = phrase.toLowerCase();
     return lowerCased.split(/[\s_-]+/);
   }
 
+  // Returns a score based on how close the listing is the passed product
   function scoreListing(product, listing) {
     var matches = {
       name: 0,
       manufacturer: 0,
       model: 0,
       family: 0,
-      score: 0,
-      product: product
+      score: 0
     };
 
     var _product = {
@@ -57,14 +58,6 @@
       }
     });
 
-    // _product.model.forEach(function(word) {
-    //   if (_listing.title.indexOf(word) > -1) {
-    //     matches.model++;
-    //   } else if (_listing.title.indexOf(splitWords(product.model).join('')) > -1) {
-    //     matches.model++;
-    //   }
-    // });
-
     _product.family.forEach(function(word) {
       if (_listing.title.indexOf(word) > -1) {
         matches.family++;
@@ -80,11 +73,11 @@
     if (matches.name && matches.manufacturer && matches.family) {
       matches.score = matches.name + matches.manufacturer + matches.model + matches.family;
     }
-    return matches;
+    return matches.score;
   }
 
-  function filterListings(listing) {
-    // Is the product model in the listing title?
+  // Returns true if the passed listing contains the currentProductModel in it's title
+  function preFilterListings(listing) {
     var _listing = splitWords(listing.title);
     var _model = splitWords(currentProductModel);
     var occurances = 0;
@@ -98,17 +91,19 @@
     });
 
     if (occurances >= _model.length) {
-      return true; //hey
+      return true;
     }
     return false;
   }
 
-  function findAndWriteMatches(products, listings) {
+  // Iterates through the products array and finds any matching listings from the listings array
+  // and writes the results to the results.txt file
+  function findAndWriteToFile(products, listings) {
     var file = fs.createWriteStream('results.txt'),
       filteredListings = [],
       matchedListings = [],
       result,
-      matched;
+      matchScore;
 
     file.on('error', function(err) {
       console.log(err);
@@ -118,11 +113,11 @@
       matchedListings = [];
       currentProductModel = product.model;
 
-      filteredListings = listings.filter(filterListings);
+      filteredListings = listings.filter(preFilterListings);
 
       filteredListings.forEach(function(listing) {
-        matched = scoreListing(product, listing);
-        if (matched.score > 0) {
+        matchScore = scoreListing(product, listing);
+        if (matchScore > 0) {
           matchedListings.push(listing);
         }
       });
@@ -142,6 +137,6 @@
     file.end();
   }
 
-  findAndWriteMatches(products, listings);
+  findAndWriteToFile(products, listings);
 
 })();
