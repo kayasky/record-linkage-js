@@ -6,27 +6,22 @@
     showLog = true,
     results = [],
     resultsTxt = "",
-    listings = useMocks
-      ? [
-        {
-          "title": "Sony DSC-W310 12.1MP Digital Camera with 4x Wide Angle Zoom with Digital Steady Shot Image Stabilization and 2.7 inch LCD (Silver)",
-          "manufacturer": "Sony",
-          "currency": "CAD",
-          "price": "139.99"
-        }
-      ]
-      : listingsArr,
-    products = useMocks
-      ? [
-        {
-          "product_name": "Sony_Cyber-shot_DSC-W310",
-          "manufacturer": "Sony",
-          "model": "DSC-W310",
-          "family": "Cyber-shot",
-          "announced-date": "2010-01-06T19:00:00.000-05:00"
-        }
-      ]
-      : productsArr;
+    currentProductModel,
+    listings = useMocks ? [{
+      "title": "Sony DSC-W310 12.1MP Digital Camera with 4x Wide Angle Zoom with Digital Steady Shot Image Stabilization and 2.7 inch LCD (Silver)",
+      "manufacturer": "Sony",
+      "currency": "CAD",
+      "price": "139.99"
+    }] :
+    listingsArr,
+    products = useMocks ? [{
+      "product_name": "Sony_Cyber-shot_DSC-W310",
+      "manufacturer": "Sony",
+      "model": "DSC-W310",
+      "family": "Cyber-shot",
+      "announced-date": "2010-01-06T19:00:00.000-05:00"
+    }] :
+    productsArr;
 
   function splitWords(phrase) {
     phrase = phrase || '';
@@ -62,13 +57,13 @@
       }
     });
 
-    _product.model.forEach(function(word) {
-      if (_listing.title.indexOf(word) > -1) {
-        matches.model++;
-      } else if (_listing.title.indexOf(splitWords(product.model).join('')) > -1) {
-        matches.model++;
-      }
-    });
+    // _product.model.forEach(function(word) {
+    //   if (_listing.title.indexOf(word) > -1) {
+    //     matches.model++;
+    //   } else if (_listing.title.indexOf(splitWords(product.model).join('')) > -1) {
+    //     matches.model++;
+    //   }
+    // });
 
     _product.family.forEach(function(word) {
       if (_listing.title.indexOf(word) > -1) {
@@ -82,27 +77,51 @@
       }
     });
 
-    if (matches.name && matches.manufacturer && (matches.model === _product.model.length) && matches.family) {
-      matches.score = matches.name + matches.manufacturer + matches.model + matches.family;
-    } else if (matches.model === _product.model.length && matches.manufacturer) {
+    if (matches.name && matches.manufacturer && matches.family) {
       matches.score = matches.name + matches.manufacturer + matches.model + matches.family;
     }
     return matches;
   }
 
+  function filterListings(listing) {
+    // Is the product model in the listing title?
+    var _listing = splitWords(listing.title);
+    var _model = splitWords(currentProductModel);
+    var occurances = 0;
+
+    _model.forEach(function(word) {
+      if (_listing.indexOf(word) > -1) {
+        occurances++;
+      } else if (_listing.indexOf(splitWords(currentProductModel).join('')) > -1) {
+        occurances++;
+      }
+    });
+
+    if (occurances >= _model.length) {
+      return true; //hey
+    }
+    return false;
+  }
+
   function findAndWriteMatches(products, listings) {
-    var file = fs.createWriteStream('results.txt');
+    var file = fs.createWriteStream('results.txt'),
+      filteredListings = [],
+      matchedListings = [],
+      result,
+      matched;
 
     file.on('error', function(err) {
       console.log(err);
     });
 
     products.forEach(function(product) {
-      var matchedListings = [];
-      var result = {};
+      matchedListings = [];
+      currentProductModel = product.model;
 
-      listings.forEach(function(listing) {
-        var matched = scoreListing(product, listing);
+      filteredListings = listings.filter(filterListings);
+
+      filteredListings.forEach(function(listing) {
+        matched = scoreListing(product, listing);
         if (matched.score > 0) {
           matchedListings.push(listing);
         }
