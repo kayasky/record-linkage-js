@@ -1,27 +1,11 @@
-(function() {
+(function(exports) {
+  'use strict';
+
   var fs = require('fs'),
-    listingsArr = require('./data/listings').listings,
-    productsArr = require('./data/products').products,
-    useMocks = false, // Set this to true to use mock data for listings and products
     showLog = true, // Set this to true to show logs while matches are being made
     results = [],
     resultsTxt = "",
-    currentProductModel,
-    listings = useMocks ? [{
-      "title": "Sony DSC-W310 12.1MP Digital Camera with 4x Wide Angle Zoom with Digital Steady Shot Image Stabilization and 2.7 inch LCD (Silver)",
-      "manufacturer": "Sony",
-      "currency": "CAD",
-      "price": "139.99"
-    }] :
-    listingsArr,
-    products = useMocks ? [{
-      "product_name": "Sony_Cyber-shot_DSC-W310",
-      "manufacturer": "Sony",
-      "model": "DSC-W310",
-      "family": "Cyber-shot",
-      "announced-date": "2010-01-06T19:00:00.000-05:00"
-    }] :
-    productsArr;
+    currentProductModel;
 
   // Returns an array containing all the words in the phrase passed
   function splitWords(phrase) {
@@ -134,6 +118,9 @@
     file.end();
   }
 
-  findAndWriteToFile(products, listings);
+  exports.link = function(products, listings) {
+    if (!products || !listings) throw 'Error: products and listings should be of type array';
+    return findAndWriteToFile(products, listings);
+  };
 
-})();
+})(typeof exports !== "undefined" ? exports : this);
