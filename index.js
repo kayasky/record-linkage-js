@@ -90,10 +90,7 @@
       }
     });
 
-    if (occurances >= _model.length) {
-      return true;
-    }
-    return false;
+    return occurances >= _model.length;
   }
 
   // Iterates through the products array and finds any matching listings from the listings array
